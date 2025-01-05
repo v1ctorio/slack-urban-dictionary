@@ -48,40 +48,25 @@ slack.command("/urbandictionary", async ({ ack, body, client,respond, command })
 		return;
 	}
 
-	const has_access = await isBotInChannel(client,body.channel_id)
 
 
-if (!has_access) {
+
 
 	try {
 		const definitions: Definition[] = await define(term)
-		let blocks = generateDefinitonBlocks(definitions[0],0,false)
+		let blocks = generateDefinitonBlocks(definitions[0],0)
 		respond({blocks,response_type:'in_channel'})
 	} catch{
 		await respond({text:"Definition not found. :(",mrkdwn:true,response_type:'ephemeral'})
 		return
 	}
 
-} else {
 
-	try {
-		const definitions: Definition[] = await define(term)
-		let blocks = generateDefinitonBlocks(definitions[0],0,true)
-		await respond({text:'sure',response_type:'ephemeral'})
-		await client.chat.postMessage({blocks,channel:body.channel_id})
-	} catch{
-		await respond({text:"Definition not found. :(",mrkdwn:true,response_type:'ephemeral'})
-		return
-	}
-}
 
 	
 
 });
-slack.action('unaviable',async({ack,action,body,respond,client})=>{
-	await ack();
-	await respond({text:'Unfourtunately slack API is trash so for pagination support, you need to add the bot to your channel.'})
-})
+
 slack.action('next', async({ack,action,body,respond,client})=>{
 	if(body.type !== "block_actions")return
 	if(action.type !== 'button')return
@@ -98,9 +83,34 @@ slack.action('next', async({ack,action,body,respond,client})=>{
 
 	try {
 		const definitions= await define(term)
-		const blocks = generateDefinitonBlocks(definitions[iter],iter,true)
+		const blocks = generateDefinitonBlocks(definitions[iter],iter)
 
-		client.chat.update({ts:message, channel,blocks})
+		respond({blocks})
+	} catch	{
+		await respond({text:"Error trying to go to the next definition. :(",mrkdwn:true,response_type:'ephemeral'})
+		return
+	}
+})
+
+slack.action('previous', async({ack,action,body,respond,client})=>{
+	if(body.type !== "block_actions")return
+	if(action.type !== 'button')return
+	ack()
+
+	console.log(body.message)
+	const message = body.message?.ts || ''
+	const channel = body.channel?.id || ''
+	const value = action.value?.split('-') ?? ['','']
+
+	console.log({message,channel,value})
+	const term = atob(value[0])
+	const iter = Number(value[1])-1
+
+	try {
+		const definitions= await define(term)
+		const blocks = generateDefinitonBlocks(definitions[iter],iter)
+
+		respond({blocks})
 	} catch	{
 		await respond({text:"Error trying to go to the next definition. :(",mrkdwn:true,response_type:'ephemeral'})
 		return
@@ -108,7 +118,7 @@ slack.action('next', async({ack,action,body,respond,client})=>{
 })
 
 
-function generateDefinitonBlocks(definition: Definition,i:number,buttons:boolean):Slack.KnownBlock[]  {
+function generateDefinitonBlocks(definition: Definition,i:number):Slack.KnownBlock[]  {
 	const blocks = [
 			{
 				"type": "header",
@@ -122,7 +132,7 @@ function generateDefinitonBlocks(definition: Definition,i:number,buttons:boolean
 				"type": "section",
 				"text": {
 					"type": "mrkdwn",
-					"text": `*Definition #${i+1}*`
+					"text": `*Definition #\`${i+1}\`*`
 				}
 			},
 			{
@@ -180,21 +190,6 @@ function generateDefinitonBlocks(definition: Definition,i:number,buttons:boolean
 			}
 		]
 	
-		if (!buttons){
-			blocks[5].elements = [
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "pagination",
-						"emoji": true
-					},
-					"value": `${btoa(definition.word)}-${i}`,
-					"action_id":"unaviable"
-				}]
-			
-				return blocks as Slack.KnownBlock[]
-		}
 
 		if (i != 0 ){
 			blocks[5].elements = [{
