@@ -104,7 +104,7 @@ slack.action("next", async ({ ack, action, body, respond, client }) => {
 	}
 });
 
-slack.action("previous", async ({ ack, action, body, respond, client }) => {
+slack.action("previous", async ({ ack, action, body, respond, client,say }) => {
 	if (body.type !== "block_actions") return;
 	if (action.type !== "button") return;
 	ack();
@@ -124,11 +124,10 @@ slack.action("previous", async ({ ack, action, body, respond, client }) => {
 
 		respond({ blocks });
 	} catch {
-		await respond({
+		if (say) say({
 			text: "Error trying to go to the next definition. :(",
 			mrkdwn: true,
-			response_type: "ephemeral",
-		});
+		}).catch(_=>_);
 		return;
 	}
 });
