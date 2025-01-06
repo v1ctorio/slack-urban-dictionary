@@ -124,10 +124,7 @@ slack.action("previous", async ({ ack, action, body, respond, client,say }) => {
 
 		respond({ blocks });
 	} catch {
-		if (say) say({
-			text: "Error trying to go to the next definition. :(",
-			mrkdwn: true,
-		}).catch(_=>_);
+
 		return;
 	}
 });
