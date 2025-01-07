@@ -95,7 +95,7 @@ slack.action("next", async ({ ack, action, body, respond, client, say}) => {
 
 		respond({ blocks });
 	} catch {
-
+		await respond({delete_original: false,response_type:'ephemeral',text:'Error getting the next definition.'})
 		return;
 	}
 });
@@ -120,7 +120,7 @@ slack.action("previous", async ({ ack, action, body, respond, client,say }) => {
 
 		respond({ blocks });
 	} catch {
-
+		await respond({delete_original: false,response_type:'ephemeral',text:'Error getting the previous definition.'})
 		return;
 	}
 });
